@@ -10,6 +10,14 @@ metadata = MetaData(naming_convention=convention)
 
 Base = declarative_base(metadata=metadata)
 
+# Table object to connects tables
+game_user = Table(
+    'game_users',
+    Base.metadata,
+    Column('game_id', ForeignKey('games.id'), primary_key=True),
+    Column('user_id', ForeignKey('users.id'), primary_key=True),
+    extend_existing=True,
+)
 # Adds the game model
 class Game(Base):
     __tablename__ = 'games'
@@ -19,7 +27,10 @@ class Game(Base):
     genre = Column(String())
     platform = Column(String())
     price = Column(Integer())
+    created_at = Column(DateTime(), server_default=func.now())
+    updated_at = Column(DateTime(), onupdate=func.now())
 
+    users = relationship('User', secondary=game_user, back_populates='games') # users relationship with back_populates
     reviews = relationship('Review', backref=backref('game')) # relationship with the Review table
 
     def __repr__(self):
@@ -33,6 +44,8 @@ class Review(Base):
     id = Column(Integer(), primary_key=True)
     score = Column(Integer())
     comment = Column(String())
+    created_at = Column(DateTime(), server_default=func.now())
+    updated_at = Column(DateTime(), onupdate=func.now())
     
     game_id = Column(Integer(), ForeignKey('games.id'))  # Adds foreign key that establishes relationship to game
     user_id = Column(Integer(), ForeignKey('users.id')) # Adds foreign key that establishes relationship to user
@@ -50,7 +63,10 @@ class User(Base):
     name = Column(String())
     created_at = Column(DateTime(), server_default=func.now())
     updated_at = Column(DateTime(), onupdate=func.now())
+
+    games = relationship('Game', secondary=game_user, back_populates='users')
     reviews = relationship('Review', backref=backref('user')) # Relationship with the Review table
+
     # don't forget your __repr__()!
     def __repr__(self):
         return f'User(id={self.id}, ' + \
